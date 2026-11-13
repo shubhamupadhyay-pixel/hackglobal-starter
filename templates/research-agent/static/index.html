@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HackGlobal Research Agent</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f6f6f4; color: #1a1a1a; }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p.sub { margin: 0 0 20px; color: #666; }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
+    button { padding: 12px 18px; border: 0; border-radius: 10px; background: #1a1a1a; color: #fff; font-size: 15px; cursor: pointer; }
+    button:disabled { opacity: 0.5; }
+    #answer { margin-top: 24px; padding: 16px; background: #fff; border: 1px solid #e2e2de; border-radius: 12px; white-space: pre-wrap; line-height: 1.5; display: none; }
+    #sources { margin-top: 12px; padding-left: 20px; }
+    #sources a { color: #1a1a1a; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>HackGlobal Research Agent</h1>
+    <p class="sub">Ask a question. The agent searches the web with Exa and answers with sources.</p>
+    <form id="form">
+      <input id="q" placeholder="e.g. What are the best free tools for students learning AI?" required />
+      <button id="go">Research</button>
+    </form>
+    <div id="answer"></div>
+    <ol id="sources"></ol>
+  </main>
+  <script>
+    const form = document.getElementById("form");
+    const q = document.getElementById("q");
+    const go = document.getElementById("go");
+    const answer = document.getElementById("answer");
+    const sources = document.getElementById("sources");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      go.disabled = true;
+      answer.style.display = "block";
+      answer.className = "";
+      answer.textContent = "Searching the web and writing an answer...";
+      sources.innerHTML = "";
+      try {
+        const res = await fetch("/api/research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q.value }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Something went wrong");
+        answer.textContent = data.answer;
+        data.sources.forEach((s) => {
+          const li = document.createElement("li");
+          const a = document.createElement("a");
+          a.href = s.url;
+          a.target = "_blank";
+          a.textContent = s.title;
+          li.appendChild(a);
+          sources.appendChild(li);
+        });
+      } catch (err) {
+        answer.className = "error";
+        answer.textContent = err.message;
+      } finally {
+        go.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
