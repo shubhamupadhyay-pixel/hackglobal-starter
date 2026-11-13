@@ -1,0 +1,200 @@
+<!-- ============================================================
+     HackGlobal 2026: Schedule section
+     Paste everything between START and END into index.html in place
+     of the current schedule section. CSS is scoped to .hgs- classes.
+     To change a time, edit REGIONS or EVENTS in the script.
+     All times there are written in IST (+05:30).
+     ============================================================ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HackGlobal 2026 Schedule (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>body { margin: 0; background: #070D1E; }</style>
+</head>
+<body>
+
+<!-- ===================== START: copy from here ===================== -->
+<section id="schedule" class="hgs">
+<style>
+  .hgs { padding: 80px 20px; font-family: 'Space Grotesk', system-ui, sans-serif; }
+  .hgs * { box-sizing: border-box; }
+  .hgs-card { max-width: 1120px; margin: 0 auto; background: #0D1A36; border: 1px solid rgba(120,170,255,.18);
+    border-radius: 24px; padding: 40px 48px 32px; }
+  .hgs-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .hgs-eyebrow { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; letter-spacing: .16em;
+    color: #4FC3F7; text-shadow: 0 0 18px rgba(79,195,247,.45); }
+  .hgs h2 { margin: 14px 0 0; font-size: 28px; font-weight: 700; line-height: 1.2; color: #fff; }
+  .hgs-pick { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+  .hgs-pickrow { display: flex; align-items: center; gap: 12px; }
+  .hgs-pickrow label { font-size: 14px; color: #9AA8C7; }
+  .hgs-select { position: relative; }
+  .hgs-select select { appearance: none; -webkit-appearance: none; font-family: inherit; font-size: 15px; color: #fff;
+    background: #0A1430; border: 1px solid rgba(255,210,63,.7); border-radius: 10px; padding: 10px 44px 10px 14px;
+    min-width: 280px; cursor: pointer; }
+  .hgs-select select option { color: #0A1430; background: #fff; }
+  .hgs-select::after { content: ""; position: absolute; right: 18px; top: 50%; width: 7px; height: 7px; margin-top: -5px;
+    border-right: 2px solid #FFD23F; border-bottom: 2px solid #FFD23F; transform: rotate(45deg); pointer-events: none; }
+  .hgs-tz { font-family: 'Space Mono', monospace; font-size: 12px; color: #7F8FB3; }
+
+  .hgs-day { margin-top: 40px; }
+  .hgs-dayname { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; letter-spacing: .14em;
+    color: #FFD23F; text-transform: uppercase; }
+  .hgs-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  .hgs-table th { text-align: left; font-size: 13px; font-weight: 500; color: #9AA8C7; padding: 0 0 12px;
+    border-bottom: 1px solid rgba(160,190,255,.35); }
+  .hgs-table td { padding: 20px 0; border-bottom: 1px solid rgba(160,190,255,.14); vertical-align: middle; }
+  .hgs-table th:first-child, .hgs-table td:first-child { width: 220px; }
+  .hgs-time { font-family: 'Space Mono', monospace; font-size: 15px; color: #9AA8C7; white-space: nowrap; }
+  .hgs-what { font-size: 18px; font-weight: 500; color: #fff; }
+  .hgs-what.hi { color: #FFD23F; }
+  .hgs-what.end { color: #FF9A3F; }
+
+  @media (max-width: 720px) {
+    .hgs-card { padding: 28px 20px 20px; border-radius: 18px; }
+    .hgs-pick { align-items: stretch; width: 100%; }
+    .hgs-pickrow { flex-direction: column; align-items: stretch; gap: 8px; }
+    .hgs-select select { width: 100%; min-width: 0; }
+    .hgs-table th:first-child, .hgs-table td:first-child { width: 140px; }
+    .hgs-time { font-size: 13px; }
+    .hgs-what { font-size: 16px; }
+  }
+</style>
+
+<div class="hgs-card">
+  <div class="hgs-top">
+    <div>
+      <div class="hgs-eyebrow">+ SCHEDULE</div>
+      <h2>Every session, in your local time</h2>
+    </div>
+    <div class="hgs-pick">
+      <div class="hgs-pickrow">
+        <label for="hgs-region">Showing times for</label>
+        <div class="hgs-select"><select id="hgs-region"></select></div>
+      </div>
+      <div class="hgs-tz" id="hgs-tz"></div>
+    </div>
+  </div>
+  <div id="hgs-days"></div>
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById("schedule");
+  if (!root) return;
+
+  // Build windows per region, in IST. Each one is 36 hours.
+  var REGIONS = [
+    { id: "us-east",   name: "US East",                     tz: "America/New_York",    open: "2026-11-13T22:30", close: "2026-11-15T10:30" },
+    { id: "us-west",   name: "US West / California",        tz: "America/Los_Angeles", open: "2026-11-13T22:30", close: "2026-11-15T10:30" },
+    { id: "india",     name: "India",                       tz: "Asia/Kolkata",        open: "2026-11-14T00:00", close: "2026-11-15T12:00" },
+    { id: "gulf",      name: "UAE / Gulf",                  tz: "Asia/Dubai",          open: "2026-11-14T01:30", close: "2026-11-15T13:30" },
+    { id: "kenya",     name: "Kenya / Turkey",              tz: "Africa/Nairobi",      open: "2026-11-14T02:30", close: "2026-11-15T14:30" },
+    { id: "cet",       name: "Germany / Nigeria / CET-WAT", tz: "Europe/Berlin",       open: "2026-11-14T04:30", close: "2026-11-15T16:30" },
+    { id: "ghana",     name: "Ghana / UTC",                 tz: "Africa/Accra",        open: "2026-11-14T05:30", close: "2026-11-15T17:30" },
+    { id: "australia", name: "Australia",                   tz: "Australia/Sydney",    open: "2026-11-13T18:30", close: "2026-11-15T06:30" },
+    { id: "japan",     name: "Korea / Japan",               tz: "Asia/Tokyo",          open: "2026-11-13T20:30", close: "2026-11-15T08:30" },
+    { id: "sea",       name: "China / Singapore / SE Asia", tz: "Asia/Singapore",      open: "2026-11-13T21:30", close: "2026-11-15T09:30" }
+  ];
+
+  // Sessions, in IST. style: "hi" = yellow, "end" = orange.
+  var EVENTS = [
+    { s: "2026-11-13T10:00", t: "Question of the Hour begins on Discord" },
+    { s: "2026-11-13T18:00", t: "My Hacking Corner opens" },
+    { s: "2026-11-13T19:30", e: "2026-11-13T20:30", t: "Pre-show and countdown" },
+    { s: "2026-11-13T20:30", e: "2026-11-13T22:30", t: "HackGlobal kickoff ceremony", style: "hi" },
+    { s: "2026-11-13T22:30", e: "2026-11-13T23:15", t: "Country Roll Call" },
+    { s: "2026-11-14T05:40", e: "2026-11-14T07:30", t: "Kickoff replay" },
+    { s: "2026-11-14T07:30", e: "2026-11-14T08:15", t: "Hacker Guide walkthrough" },
+    { s: "2026-11-14T08:15", e: "2026-11-14T08:45", t: "Skribbl.io: Tech Edition" },
+    { s: "2026-11-14T10:00", e: "2026-11-14T11:00", t: "Project walkthrough 1: Asia" },
+    { s: "2026-11-14T12:30", e: "2026-11-14T14:00", t: "Mentor session 1" },
+    { s: "2026-11-14T14:30", e: "2026-11-14T20:30", t: "Global Typing Race" },
+    { s: "2026-11-14T15:30", e: "2026-11-14T16:30", t: "Project walkthrough 1: Africa and Europe" },
+    { s: "2026-11-14T17:15", e: "2026-11-14T17:45", t: "Raffle draw" },
+    { s: "2026-11-14T18:00", e: "2026-11-14T19:00", t: "60-Minute UX Sprint" },
+    { s: "2026-11-14T20:30", e: "2026-11-14T21:00", t: "Global Trivia" },
+    { s: "2026-11-14T21:45", e: "2026-11-14T22:30", t: "Open Q&A" },
+    { s: "2026-11-14T23:30", e: "2026-11-15T00:30", t: "Project walkthrough 1: Americas" },
+    { s: "2026-11-15T03:30", e: "2026-11-15T05:00", t: "Mentor session 2" },
+    { s: "2026-11-15T05:30", e: "2026-11-15T06:30", t: "Project walkthrough 2: Americas" },
+    { s: "2026-11-15T07:30", e: "2026-11-15T08:10", t: "Submission checklist" },
+    { s: "2026-11-15T08:10", e: "2026-11-15T09:00", t: "Pitch Clinic" },
+    { s: "2026-11-15T09:00", e: "2026-11-15T10:00", t: "Project walkthrough 2: Asia" },
+    { s: "2026-11-15T10:30", e: "2026-11-15T20:30", t: "Judging" },
+    { s: "2026-11-15T12:30", e: "2026-11-15T13:30", t: "Project walkthrough 2: Africa and Europe" },
+    { s: "2026-11-15T18:40", e: "2026-11-15T19:25", t: "Code in the Dark" },
+    { s: "2026-11-15T19:45", e: "2026-11-15T20:20", t: "Slideshow Karaoke and Side Quest winners" },
+    { s: "2026-11-15T20:30", e: "2026-11-15T21:20", t: "Pre-demo red-carpet show" },
+    { s: "2026-11-15T21:30", e: "2026-11-15T23:30", t: "Project demos", style: "hi" },
+    { s: "2026-11-15T23:30", e: "2026-11-15T23:59", t: "Closing and certificate info" }
+  ];
+
+  var region = REGIONS[2];
+  function at(ist) { return new Date(ist + ":00+05:30"); }
+  function hm(d, tz) { return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz }); }
+  function dayKey(d, tz) { return d.toLocaleDateString("en-CA", { timeZone: tz }); }
+  function dayName(d, tz) {
+    var p = function (o) { o.timeZone = tz; return d.toLocaleDateString("en-GB", o); };
+    return p({ weekday: "short" }) + " " + p({ day: "numeric" }) + " " + p({ month: "short" });
+  }
+  function offset(tz) {
+    try {
+      var part = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" })
+        .formatToParts(at("2026-11-14T12:00")).filter(function (x) { return x.type === "timeZoneName"; })[0];
+      return part ? part.value : "";
+    } catch (e) { return ""; }
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // Pre-select the visitor's region from their clock; India if nothing matches.
+  try {
+    var mine = Intl.DateTimeFormat().resolvedOptions().timeZone, probe = at("2026-11-14T12:00");
+    var hit = REGIONS.filter(function (r) { return r.tz === mine; })[0] ||
+              REGIONS.filter(function (r) { return hm(probe, r.tz) === hm(probe, mine); })[0];
+    if (!hit && mine.indexOf("America/") === 0) hit = /Los_Angeles|Vancouver|Tijuana|Phoenix|Denver|Edmonton/.test(mine) ? REGIONS[1] : REGIONS[0];
+    if (hit) region = hit;
+  } catch (e) {}
+
+  var sel = root.querySelector("#hgs-region");
+  sel.innerHTML = REGIONS.map(function (r) { return '<option value="' + r.id + '">' + esc(r.name) + "</option>"; }).join("");
+
+  function render() {
+    var tz = region.tz;
+    sel.value = region.id;
+    root.querySelector("#hgs-tz").textContent = offset(tz) + " · times update automatically";
+
+    var list = EVENTS.concat([
+      { s: region.open, t: "Hack begins" },
+      { s: region.close, t: "Hack ends", style: "end" }
+    ]).sort(function (a, b) { return at(a.s) - at(b.s); });
+
+    var days = [];
+    list.forEach(function (ev) {
+      var d = at(ev.s), k = dayKey(d, tz), last = days[days.length - 1];
+      if (!last || last.k !== k) { last = { k: k, name: dayName(d, tz), rows: [] }; days.push(last); }
+      var when = hm(d, tz) + (ev.e ? " to " + hm(at(ev.e), tz) : "");
+      last.rows.push('<tr><td class="hgs-time">' + when + '</td><td class="hgs-what' + (ev.style ? " " + ev.style : "") + '">' + esc(ev.t) + "</td></tr>");
+    });
+
+    root.querySelector("#hgs-days").innerHTML = days.map(function (day) {
+      return '<div class="hgs-day"><div class="hgs-dayname">' + day.name + '</div><table class="hgs-table"><thead><tr><th>Time</th><th>Session</th></tr></thead><tbody>' +
+        day.rows.join("") + "</tbody></table></div>";
+    }).join("");
+  }
+
+  sel.addEventListener("change", function () {
+    region = REGIONS.filter(function (r) { return r.id === sel.value; })[0];
+    render();
+  });
+  render();
+})();
+</script>
+</section>
+<!-- ====================== END: copy until here ====================== -->
+
+</body>
+</html>
